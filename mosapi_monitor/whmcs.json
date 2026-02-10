@@ -1,0 +1,18 @@
+{
+  "schema": "1.0",
+  "type": "whmcs-addons",
+  "name": "mosapi_monitor",
+  "version": "1.0",
+  "license": "MIT",
+  "category": "utilities",
+  "description": {
+    "name": "ICANN MoSAPI Registrar Monitor for WHMCS",
+    "tagline": "Displays ICANN MoSAPI registrar monitoring status and the latest Domain METRICA report"
+  },
+  "authors": [
+    {
+      "name": "Namingo",
+      "homepage": "https:\/\/namingo.org\/"
+    }
+  ]
+}
