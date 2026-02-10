@@ -12,8 +12,6 @@ if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
 }
 
-use WHMCS\Database\Capsule;
-
 function mosapi_monitor_config()
 {
     return [
@@ -25,7 +23,7 @@ function mosapi_monitor_config()
 
         "fields" => [
             "base_url" => [
-                "FriendlyName" => "Base URL (include your IANA ID)",
+                "FriendlyName" => "Base URL (with IANA ID)",
                 "Type"         => "text",
                 "Size"         => "80",
                 "Default"      => "https://mosapi.icann.org/rr/your-iana-id",
@@ -62,13 +60,13 @@ function mosapi_monitor_config()
                 "Default"      => "off",
                 "Description"  => "If disabled, only counts are shown (less sensitive / faster UI).",
             ],
-			"source_ip" => [
-				"FriendlyName" => "Source IP (Optional)",
-				"Type" => "text",
-				"Size" => "20",
-				"Default" => "",
-				"Description" => "Outgoing IP for API connections (if server has multiple IPs).",
-			],
+            "source_ip" => [
+                "FriendlyName" => "Source IP (Optional)",
+                "Type" => "text",
+                "Size" => "20",
+                "Default" => "",
+                "Description" => "Outgoing IP for API connections (if server has multiple IPs).",
+            ],
         ],
     ];
 }
@@ -104,7 +102,7 @@ function mosapi_monitor_output($vars)
         "timeout"      => (int)($vars["timeout"] ?? 10),
         "cache_ttl"    => (int)($vars["cache_ttl"] ?? 290),
         "show_domains" => !empty($vars["show_domains"]),
-		"source_ip"    => trim((string)($vars["source_ip"] ?? "")),
+        "source_ip"    => trim((string)($vars["source_ip"] ?? "")),
     ];
 
     echo '<div class="container-fluid">';
@@ -239,16 +237,22 @@ function mosapi_monitor_login(array $cfg, string $cookieFile): void
     $url = rtrim($cfg["base_url"], "/") . "/login";
 
     $ch = curl_init($url);
-    curl_setopt_array($ch, [
+
+    $opts = [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_USERPWD        => $cfg["username"] . ":" . $cfg["password"],
         CURLOPT_COOKIEJAR      => $cookieFile,
         CURLOPT_TIMEOUT        => (int)$cfg["timeout"],
-		CURLOPT_INTERFACE      => $cfg['source_ip'] ?? null,
         CURLOPT_HTTPHEADER     => [
             "Accept: application/json",
         ],
-    ]);
+    ];
+
+    if (!empty($cfg["source_ip"])) {
+        $opts[CURLOPT_INTERFACE] = $cfg["source_ip"];
+    }
+
+    curl_setopt_array($ch, $opts);
 
     $response = curl_exec($ch);
     $status   = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -270,17 +274,23 @@ function mosapi_monitor_login(array $cfg, string $cookieFile): void
 function mosapi_monitor_fetchJson(string $url, array $cfg, string $cookieFile): array
 {
     $ch = curl_init($url);
-    curl_setopt_array($ch, [
+
+    $opts = [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_COOKIEFILE     => $cookieFile,
         CURLOPT_TIMEOUT        => (int)$cfg["timeout"],
         CURLOPT_ENCODING       => "gzip",
-		CURLOPT_INTERFACE      => $cfg['source_ip'] ?? null,
         CURLOPT_HTTPHEADER     => [
             "Accept: application/json",
             "Accept-Encoding: gzip",
         ],
-    ]);
+    ];
+
+    if (!empty($cfg["source_ip"])) {
+        $opts[CURLOPT_INTERFACE] = $cfg["source_ip"];
+    }
+
+    curl_setopt_array($ch, $opts);
 
     $response = curl_exec($ch);
     $status   = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -311,11 +321,19 @@ function mosapi_monitor_logout(array $cfg, string $cookieFile): void
     $url = rtrim($cfg["base_url"], "/") . "/logout";
 
     $ch = curl_init($url);
-    curl_setopt_array($ch, [
+
+    $opts = [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_COOKIEFILE     => $cookieFile,
         CURLOPT_TIMEOUT        => (int)$cfg["timeout"],
-    ]);
+    ];
+
+    if (!empty($cfg["source_ip"])) {
+        $opts[CURLOPT_INTERFACE] = $cfg["source_ip"];
+    }
+
+    curl_setopt_array($ch, $opts);
+
     curl_exec($ch);
     curl_close($ch);
 }
